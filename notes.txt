@@ -1,0 +1,80 @@
+- Database
+An organised collection of data stored and accessed electronically.
+It is designed to hold structured data, and allows us to query and manipulate it.
+
+- DBMS
+(Database Management System)
+A software system that interacts with end-users, applications, and the database itself.
+It provides users with a systematic way to create, retrieve, update and manage data.
+
+- RDBMS
+Relational DBMS stores data in a structured format, using rows and columns.
+This allows us to identify and access data in relation to other picces of data.
+Data is organised into tables, each table has a key field that uniquely identifies each row.
+Relations among tables are created through foreign keys.
+
+- Database Engine
+Ensures that the storage of data is efficient; in terms of read-write speed from a disk.
+A database engine is the layer between the data and the DBMS.
+
+- SQLite
+It is a C-Language library that implements a SQL database engine.
+It is also a file format (single file) which is cross-platform and backwards compatible.
+
+- MySQL
+It is a DBMS which can use multiple database engines.
+It typically uses the client-server architecture.
+
+- MySQL v/s sqlite
+    - Similarities
+        Both MySQL and SQLite are relational database management systems (RDBMS).
+        They both support SQL (Structured Query Language) for querying and manipulating data.
+        Both can be used in client-server architecture, allowing multiple clients to access the database simultaneously.
+        They both provide ACID (Atomicity, Consistency, Isolation, Durability) properties to ensure data integrity.
+        Both support indexes for efficient data retrieval.
+    - Differences
+        - MySQL
+            MySQL is a client-server RDBMS.
+            It supports multiple concurrent connections.
+            It is suitable for large-scale applications with high traffic.
+            It offers advanced features like replication, clustering, and partitioning.
+            It requires a separate installation and configuration process.
+        - SQLite
+            SQLite is a serverless embedded RDBMS.
+            It operates on a single file and does not require a separate server process.
+            It is suitable for small-scale applications or mobile development.
+            It has a smaller footprint and is easier to set up and use.
+            It lacks advanced features like replication and clustering.
+
+
+
+Miscellaneous
+    if (argc > 2)
+    {
+        std::cerr << "Too many arguments." << std::endl;
+        return 1;
+    }
+
+    bool parse = true;
+    if (argc == 2) {
+        if (argv[1] == "-n") {
+            parse = false;
+        }
+        else {
+            std::cerr << "Invalid argument." << std::endl;
+            return 1;
+        }
+    } else
+    {
+        ; // using default argument => parsing the line
+    }
+
+
+View #1
+    File can be seen as a stream of bytes
+    This the view that is taken into account when using C APIs
+
+View #2
+    File is a collection of records with fields
+
+
