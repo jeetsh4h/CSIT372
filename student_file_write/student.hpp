@@ -2,8 +2,7 @@
 #include <fstream>
 #include <string>
 
-class student {
-public:
+struct student {
     unsigned int roll_no;
     std::string first_name;
     std::string last_name;
@@ -39,15 +38,10 @@ void read(std::string file_path, unsigned int find_roll_no) {
     FILE *fp = fopen(file_path.c_str(), "rb");    
     student *s = new student();
 
-    fseek(fp, 0, SEEK_SET);
-    fseek(fp, sizeof(student) * (find_roll_no - 1), SEEK_SET);
-
-    fread(&s->roll_no, sizeof(unsigned int), 1, fp);
-    fread(&s->first_name, sizeof(std::string), 1, fp);
-    fread(&s->last_name, sizeof(std::string), 1, fp);
-    fread(&s->age, sizeof(unsigned int), 1, fp);
-    fread(&s->major, sizeof(std::string), 1, fp);
-
+    rewind(fp);
+    fseek(fp, (find_roll_no - 1) * sizeof(student), SEEK_SET);
+    
+    fread(s, sizeof(student), 1, fp);
     s->print();
 
     fclose(fp);
@@ -57,13 +51,6 @@ void read(std::string file_path, unsigned int find_roll_no) {
 void write(std::string file_path, student *s) {
     FILE *fp = fopen(file_path.c_str(), "ab");   
     
-    fwrite(&s->roll_no, sizeof(unsigned int), 1, fp);
-    fwrite(&s->first_name, sizeof(std::string), 1, fp);
-    fwrite(&s->last_name, sizeof(std::string), 1, fp);
-    fwrite(&s->age, sizeof(unsigned int), 1, fp);
-    fwrite(&s->major, sizeof(std::string), 1, fp);
-    s->print();
-    std::cout << std::endl;
-
+    fwrite(s, sizeof(student), 1, fp);
     fclose(fp);
 }

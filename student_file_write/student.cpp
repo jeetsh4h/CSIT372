@@ -1,5 +1,15 @@
 #include "student.hpp"
 
+void createFile(const std::string& file_path) {
+    std::ofstream file(file_path);
+    file.close();
+}
+
+void recreateFile(const std::string& file_path) {
+    std::remove(file_path.c_str());
+    createFile(file_path);
+}
+
 int main() {
     student student1(1, "John", "Doe", 20, "Computer Science");
     student student2(2, "Jane", "Doe", 19, "Computer Science");
@@ -13,24 +23,29 @@ int main() {
 
     student *students[] = {&student1, &student2, &student3, &student4, &student5, &student6, &student7, &student8};
 
-    std::cout << "Record Length: " << sizeof(student1) << std::endl << std::endl;
+    std::string file_path = "students.dat";
     
-    std::string file_path = "./students";
-    // FILE *fp = fopen(file_path.c_str(), "x");
-    // fclose(fp);
-
-    // std::cout << "file_create";
+    std::ifstream file_check(file_path);
+    if (file_check.good()) {
+        file_check.close();
+        recreateFile(file_path);
+    } else {
+        file_check.close();
+        createFile(file_path);
+    }
+    
 
     for (student *curr_student: students) {
         // curr_student->print();
         write(file_path, curr_student);
     }
+    
     read(file_path, 8);
-
     std::cout << std::endl;
 
+
     write(file_path, &student9);
-    read(file_path, 9); 
+    read(file_path, 9);
 
     return 0;
 }
