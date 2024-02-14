@@ -1,3 +1,5 @@
+#ifndef PERSON_HPP
+#define PERSON_HPP
 #include <string>
 
 struct Person {
@@ -35,3 +37,5 @@ struct Person {
             );
     }
 };
+
+#endif

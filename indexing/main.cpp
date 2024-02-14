@@ -2,14 +2,8 @@
 #include <fstream>
 
 #include "csv.hpp"
+#include "index.hpp"
 
-template <typename field>
-struct index_field {
-    unsigned int id;
-    field sorted_field;
-};
-
-std::vector<index_field> person_sort_by_field(std::vector<Person *>, std::string);
 
 int main() {
     std::vector<Person *> people;
@@ -22,43 +16,16 @@ int main() {
         }
     }
 
-    return 0;
-}
+    std::vector<index_field> index = index_people_by_field(people, index::email);
 
-
-auto person_sort_by_field(auto people, std::string field) {   
-    switch (field) {
-        case "id":
-            std::vector<index_field<unsigned short int> unsorted_index;
-            for (Person *p : people) {
-                unsorted_index.push_back(index_field(p->id, p->id));
-            }
+    int check = 1;
+    for (index_field field : index) {
+        field.print();
+        check++;
+        if (check > 10) {
             break;
-
-        case "first_name":  
-            for (Person *p : people) {
-                unsorted_index.push_back(index_field(p->id, p->first_name));
-            }  
-            break;
-        
-        case "last_name":
-            for (Person *p : people) {
-                unsorted_index.push_back(index_field(p->id, p->last_name));
-            }
-            break;
-        
-        case "email":
-            for (Person *p : people) {
-                unsorted_index.push_back(index_field(p->id, p->email));
-            }
-            break;
-        
-        case "gender":
-            for (Person *p : people) {
-                unsorted_index.push_back(index_field(p->id, p->email));
-            }
-            break;
+        }
     }
 
-    return unsorted_index;
+    return 0;
 }
