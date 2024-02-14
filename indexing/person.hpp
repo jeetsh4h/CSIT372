@@ -27,31 +27,6 @@ struct Person {
         this->gender = gender;
     }
 
-/* not needed in this particular situation */
-    // bool operator<(const Person& other) const {
-    //     return this->first_name < other.first_name;
-    // }
-
-    // bool operator>(const Person& other) const {
-    //     return this->first_name > other.first_name;
-    // }
-
-    // bool operator==(const Person& other) const {
-    //     return this->first_name == other.first_name;
-    // }
-
-    // bool operator!=(const Person& other) const {
-    //     return this->first_name != other.first_name;
-    // }
-
-    // bool operator<=(const Person& other) const {
-    //     return this->first_name <= other.first_name;
-    // }
-
-    // bool operator>=(const Person& other) const {
-    //     return this->first_name >= other.first_name;
-    // }
-
 // debugging functions
     void print() const {
         printf("ID: %d, First Name: %s, Last Name: %s, Email: %s, Gender: %s\n", 
