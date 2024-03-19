@@ -24,6 +24,7 @@ struct BSTree {
 
     void addNode(Person data);
     Person* search(std::string name) const;
+    void rebalanceTree();
 };
 
 
@@ -73,4 +74,8 @@ Person* BSTree::search(std::string name) const {
     }
     printf("Accesses: %d\n", n_access);
     return nullptr;
+}
+
+void BSTree::rebalanceTree() {
+    // NotImplemented
 }

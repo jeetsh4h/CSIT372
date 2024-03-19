@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <algorithm>
 
 #include "person.hpp"
 
@@ -140,5 +141,28 @@ std::vector<index_field<field>> load_index_from_disk(std::string file_path) {
     return index;
 }
 
+template<typename field>
+void insert_into_index(std::vector<index_field<field>>& index, index_field<field> record) {
+    index.push_back(record);
+    mergesort(*index, 0, index.size() - 1);
+}
+
+
+/* TODO: finish writing this function,,, quite a few things wrong with it */
+template<typename field>
+std::vector<index_field<field>> insert_index(const std::vector<index_field<field>>& index, field key_to_delete) {
+    // finding which place to insert new record, or delete new record
+    auto it = std::lower_bound(index.begin(), index.end(), search_key, [](const index_field<field>& idx, const field& key_to_delete) {
+        return idx.sort_key < key_to_delete);
+    });
+
+    std::vector<index_field<field>> result;
+    while (it != index.end() && it->sort_key == search_key) {
+        result.push_back(*it);
+        ++it;
+    }
+
+    return result;
+}
 
 /* TODO: write a function to search for persons using the index */

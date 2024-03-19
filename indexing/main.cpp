@@ -23,7 +23,6 @@ int main() {
     // delete &first_name_index;
     std::vector<index_field<std::string>> fname_index_from_file = load_index_from_disk<std::string>(fname_index_file_path);
 
-/* for debugging purposes,, this works */
     for (index_field<std::string> idx : fname_index_from_file) {
         people[idx.index - 1]->print();
     }
