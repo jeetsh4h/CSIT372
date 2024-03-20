@@ -1,7 +1,6 @@
+#include <string>
+#include <vector>
 #include <fstream>
-#include <iostream>
-
-#include "hash_probe.hpp"
 
 std::string get_first_name_from_line(std::string line) {
     size_t pos = 0;
@@ -20,38 +19,29 @@ std::string get_first_name_from_line(std::string line) {
 }
 
 
-int main() {
-    std::string first_names[1000];
+std::vector<std::string> read_csv(std::string file_path, size_t max_lines) {
+    std::vector<std::string> first_names;
 
-    std::ifstream csv_file("./test.csv");
+    std::ifstream csv_file(file_path);
     if (csv_file) {
         std::string line;
         size_t idx = 0;
         while (std::getline(csv_file, line)) {
             std::string first_name = get_first_name_from_line(line);
             if (first_name == "") {
-                std::cout << "Error: first name is empty; idx: " << idx  << std::endl;
+                printf("Error: first name is empty; idx: %lu\n", idx);
             }
-            first_names[idx] = first_name;
+            first_names.push_back(first_name);
             idx++;
+            if (idx >= max_lines) {
+                break;
+            }
         }
         csv_file.close();
     } else {
         printf("Failed to open the CSV file.\n");
-        return -1;
+        return std::vector<std::string>();
     }
 
-    naiveHash hash_table;   // can only accept non-empty strings
-    for (std::string name : first_names) {
-        hash_table.insert(name);
-    }
-
-    // searching through the hash table
-    for (std::string name : first_names) {
-        hash_table.exists(name);
-    }
-
-    printf("Average number of searches: %f\n", hash_table.average_searches);
-
-    return 0;
+    return first_names;
 }
