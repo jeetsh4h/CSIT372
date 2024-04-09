@@ -3,8 +3,8 @@
 
 #include <filesystem>
 
-// namespace Global {
-// }
-std::filesystem::path *cwd;
+namespace global {
+    extern std::filesystem::path *cwd;
+}
 
 #endif /* GLOBAL_HPP */

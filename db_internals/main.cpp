@@ -9,12 +9,14 @@
 #include <filesystem>
 
 #include "global.hpp"
+std::filesystem::path *global::cwd;
+
 #include "interface-parsing.hpp"
 
 int main() {
     // setting the current working directory in the heap
     // this will be updated by the open and close meta-commands
-    cwd = new std::filesystem::path(std::filesystem::current_path());
+    global::cwd = new std::filesystem::path(std::filesystem::current_path());
 
     dbLoop();
 }

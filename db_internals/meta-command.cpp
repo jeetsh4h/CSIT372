@@ -4,6 +4,7 @@
 #include <filesystem>
 
 #include "global.hpp"
+
 #include "parse-utils.hpp"
 #include "csv-parsing.hpp"
 
@@ -26,15 +27,17 @@ void exec_meta_command(const std::string& command) {
             break;
 
         case MetaCommand::Open:
-            // TODO: Implement the open command
+            // only passing along the path
+            open_db(command.substr(5));
             break;
 
         case MetaCommand::Close:
-            *cwd = std::filesystem::current_path();
+            // TODO: implement the close command
+            *global::cwd = std::filesystem::current_path();
             break;
 
         case MetaCommand::CWD:
-            std::cout << *cwd << std::endl;
+            std::cout << *global::cwd << std::endl;
             break;
 
         case MetaCommand::Unknown:
@@ -115,4 +118,5 @@ void open_db(const std::string& path) {
     std::filesystem::path dir_path(path);
 
     // TODO: Implement the open command
+    *global::cwd = dir_path;
 }

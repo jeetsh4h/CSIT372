@@ -16,6 +16,7 @@ void exec_meta_command(const std::string&);
 MetaCommand getMetaCommand(const std::string&);
 
 void load_csv(const std::string&);
+void open_db(const std::string&);
 
 
 #endif /* META_COMMAND_HPP */
