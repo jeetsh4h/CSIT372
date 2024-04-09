@@ -1,8 +1,9 @@
 #include <iostream>
 
-#include "interface-parsing.hpp"
 #include "parse-utils.hpp"
 #include "meta-command.hpp"
+
+#include "interface-parsing.hpp"
 
 void dbLoop() {
     while (true) {
@@ -54,16 +55,14 @@ int parse_input(const std::string& input) {
     std::vector<std::string> commands = split_string(stripped_input, ';');
 
     for (const std::string& command : commands) {
-    /* DEBUG */
-        std::cout << command << std::endl;
-    /* DEBUG */
-    if (command[0] == '.') {
-        std::string meta_command = command.substr(1);
-        exec_meta_command(meta_command);
-    } else {
-
+        if (command[0] == '.') {
+            std::string meta_command = command.substr(1);
+            exec_meta_command(meta_command);
+        } else {
+            // TODO: the sql query parsing
+            continue;
+        }
     }
-
 
     return 0;
 }
