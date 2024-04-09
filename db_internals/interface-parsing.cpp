@@ -2,6 +2,7 @@
 
 #include "parse-utils.hpp"
 #include "meta-command.hpp"
+#include "sql-command.hpp"
 
 #include "interface-parsing.hpp"
 
@@ -59,8 +60,7 @@ int parse_input(const std::string& input) {
             std::string meta_command = command.substr(1);
             exec_meta_command(meta_command);
         } else {
-            // TODO: the sql query parsing
-            continue;
+            exec_sql_command(command);
         }
     }
 
