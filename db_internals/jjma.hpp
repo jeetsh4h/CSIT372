@@ -4,6 +4,8 @@
 #include <map>
 #include <string>
 #include <filesystem>
+#include <vector>
+#include <variant>
 
 /*
  * if an id is not present within the 
@@ -17,17 +19,12 @@ enum jjma_dataTypes {
     INT,    // long
     DOUBLE, // double
     STRING, // std::string
-    BOOL    // bool
+    // BOOL    // boolean
+    UNKNOWN // unknown data type
 };
 
-union jjma_data {
-    unsigned int id;
-    long int int_val;
-    double double_val;
-    std::string string_val;
-    bool bool_val;
-};
-
-std::filesystem::path build_jjma(const std::map<std::string, jjma_dataTypes>);
+std::filesystem::path build_jjma_for_csv(const std::map<std::string, jjma_dataTypes>);
+std::map<std::string, jjma_dataTypes> parse_schema(const std::filesystem::path&);
+jjma_dataTypes stringToEnum(const std::string&);
 
 #endif /* JJMA_HPP */

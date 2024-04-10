@@ -6,13 +6,12 @@
  * Make sure the above command is run in the same directory
  * as the file main.cpp
  */
-#include <filesystem>
 
 #include "global.hpp"
+#include "interface-parsing.hpp"
+
 std::filesystem::path *global::cwd;
 bool global::db_open;
-
-#include "interface-parsing.hpp"
 
 int main() {
     // setting the current working directory in the heap

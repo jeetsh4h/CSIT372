@@ -1,15 +1,42 @@
-#include <filesystem>
-#include <map>
-#include <unordered_set>
-#include <vector>
-#include <string>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 #include "jjma.hpp"
-#include "build-jjdb.hpp"
+#include "parse-utils.hpp"
+#include "jjdb.hpp"
 
 #include "csv-parsing.hpp"
+
+
+/* delimiter is assumed to be a comma
+ * this also assumes that double quotes are 
+ * to escape commas
+ * Only double quotes can be escaped using a 
+ * '\' character, and that too just one.
+ * No other character can be escaped like that, even commas.
+ */
+std::vector<std::string> parse_csv_line(const std::string& line) {
+    std::vector<std::string> parsed_line;
+    bool inQuotes = false;
+    char prev_char = '\0';
+    
+    std::string field;
+    for (char c : line)
+    {
+        if (c == '"' && prev_char != '\\') {
+            inQuotes = !inQuotes;
+        } else if (c == ',' && !inQuotes){
+
+            parsed_line.push_back(field);
+            field = "";
+        } else {
+            field += c;
+        }
+        prev_char = c;
+    }
+
+    return parsed_line;
+}
 
 /*
  * Assuming that the CSV file **has headers**
@@ -22,84 +49,62 @@
  * we create it within the struct by default.
  */
 std::map<std::string, jjma_dataTypes> parse_csv(const std::filesystem::path& file_path) {
-    // TODO: implement a more robust boolean datatype detection
-    
-    std::ifstream file(file_path);
+    std::ifstream csv_file(file_path);
     std::string line;
-    std::vector<std::vector<std::string>> data;
-    std::vector<std::string> headers;
-    std::map<std::string, jjma_dataTypes> dataTypeMap; // Map to store column headers and their data types
     
-    std::getline(file, line);
-    std::istringstream ss(line);
-    std::string cell;
-    while (std::getline(ss, cell, ',')) {
-        headers.push_back(cell);
+    getline(csv_file, line); // Get the first line (header row)
+    std::vector<std::string> header = parse_csv_line(line);
+
+    std::map<std::string, jjma_dataTypes> jjma_for_csv;
+    for (std::string& column : header) {
+        jjma_for_csv[column] = jjma_dataTypes::ID;
     }
-
-    while (std::getline(file, line)) {
-        std::istringstream ss(line);
-        std::vector<std::string> row;
-        std::string cell;
-
-        while (std::getline(ss, cell, ',')) {
-            row.push_back(cell);
-        }
-
-        data.push_back(row);
-    }
-
-    for (int i = 0; i < (int)headers.size(); i++) { // Traverse column-wise
-        std::vector<std::string> column;
-        for (int j = 0; j < (int)data.size(); j++) {
-            column.push_back(data[j][i]);
-        }
-        std::string dataType = determineDataType(column[0]);
-        for (int j = 1; j < (int)column.size(); j++) {
-            if (determineDataType(column[j]) != dataType) {
-                dataType = "string";
-                break;
+    
+    while (getline(csv_file, line)) {
+        std::vector<std::string> row = parse_csv_line(line);
+        for (size_t i = 0; i < (size_t)row.size(); i++) {
+            // no need to check further for string
+            if (jjma_for_csv[header[i]] == jjma_dataTypes::STRING) {
+                continue;
             }
+            jjma_for_csv[header[i]] = determineDataType(row[i]);
         }
-        dataTypeMap[headers[i]] = convertToEnum(dataType); // Store header and uska data type in the map
     }
 
-    return dataTypeMap;
+    return jjma_for_csv;
 }
 
-std::string determineDataType(const std::string& value) {
+jjma_dataTypes determineDataType(const std::string& value) {
     std::istringstream iss(value);
     int intVal;
     double doubleVal;
     if (iss >> intVal) {
         if (iss.eof()) {
-            return "int"; // Only an integer
+            return jjma_dataTypes::INT;      // Only an integer
         } else if (iss >> doubleVal && iss.eof()) {
-            return "double"; // Integer followed by a double
+            return jjma_dataTypes::DOUBLE;   // Integer followed by a double
         } else {
-            return "string";
+            return jjma_dataTypes::STRING;   // Integer followed by a string;
         }
     } else if (iss >> doubleVal && iss.eof()) {
-        return "double"; // Only a double
+        return jjma_dataTypes::DOUBLE;      // Only a double
     } else {
-        std::unordered_set<std::string> booleanValues{"true", "false", "T", "F", "t", "f"}; // Possible boolean values
-        if (booleanValues.find(value) != booleanValues.end())
-            return "boolean"; // If value is one of the boolean values
-        else
-            return "string";
+        return jjma_dataTypes::STRING;      // Only a string
     }
 }
 
-jjma_dataTypes convertToEnum(const std::string& dataType) {
-    if (dataType == "int") {
-        return jjma_dataTypes::INT;
-    } else if (dataType == "double") {
-        return jjma_dataTypes::DOUBLE;
-    } else if (dataType == "string") {
-        return jjma_dataTypes::STRING;
-    } else if (dataType == "boolean") {
-        return jjma_dataTypes::BOOL;
-    } else {
-        return jjma_dataTypes::STRING;
-    }
-}
+// std::string convertEnumToString(jjma_dataTypes dataType) {
+//     switch (dataType) {
+//         case jjma_dataTypes::ID:
+//             return "auto_id";
+//         case jjma_dataTypes::INT:
+//             return "int";
+//         case jjma_dataTypes::DOUBLE:
+//             return "double";
+//         case jjma_dataTypes::STRING:
+//             return "string";
+//         // case jjma_dataTypes::BOOL:
+//         //     return "bool";
+//     }
+//     return "unknown";
+// }

@@ -3,7 +3,10 @@
 #include <fstream>
 
 // TODO: Implement this @jashpopat
-void read_jjb(std::ifstream& jjb_file) {
+/*
+ * Have to figure out what this function will do 
+ */
+void read_jjb() {
     
     return;
 }

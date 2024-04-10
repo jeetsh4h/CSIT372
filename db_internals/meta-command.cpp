@@ -1,14 +1,11 @@
 #include <iostream>
-#include <string>
-#include <vector>
-#include <filesystem>
 
 #include "global.hpp"
 
 #include "parse-utils.hpp"
 #include "csv-parsing.hpp"
 #include "jjma.hpp"
-#include "build-jjdb.hpp"
+#include "jjdb.hpp"
 
 #include "meta-command.hpp"
 
@@ -106,22 +103,22 @@ void load_csv(const std::string& path) {
         return;
     }
 
-    std::filesystem::path file_path(path);
+    std::filesystem::path csv_path(path);
 
     // check if the file exists
-    if (!std::filesystem::exists(file_path)) {
+    if (!std::filesystem::exists(csv_path)) {
         std::cout << "File does not exist." << std::endl;
         return;
     }
 
     // check if the file is a csv file
-    if (file_path.extension() != ".csv") {
+    if (csv_path.extension() != ".csv") {
         std::cout << "Path provided is not to a CSV file." << std::endl;
         return;
     }
 
-    std::filesystem::path csv_schema = build_jjma(parse_csv(file_path));
-
+    build_jjma_for_csv(parse_csv(csv_path));
+    build_jjdb_for_csv(csv_path);
     return;
 }
 
