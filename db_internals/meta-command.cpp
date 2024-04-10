@@ -7,6 +7,8 @@
 
 #include "parse-utils.hpp"
 #include "csv-parsing.hpp"
+#include "jjma.hpp"
+#include "build-jjdb.hpp"
 
 #include "meta-command.hpp"
 
@@ -40,6 +42,18 @@ void exec_meta_command(const std::string& command) {
             std::cout << *global::cwd << std::endl;
             break;
 
+        case MetaCommand::DROP:
+            // delete the current working directory (the database directory)
+            if (global::db_open) {
+                std::filesystem::remove_all(*global::cwd);
+                // and then call close
+                *global::cwd = std::filesystem::current_path();
+                global::db_open = false;
+            } else {
+                std::cout << "No JJDB is open. Please open the JJDB before dropping it." << std::endl;
+            }
+            break;
+
         case MetaCommand::Unknown:
             std::cout << "Unrecognized command: " << command << std::endl;
             break;
@@ -66,6 +80,10 @@ MetaCommand getMetaCommand(const std::string& command) {
 
     if (command == "close") {
         return MetaCommand::Close;
+    }
+
+    if (command == "drop") {
+        return MetaCommand::DROP;
     }
 
     std::vector<std::string> command_tokens = split_string(command, ' ');
@@ -102,7 +120,8 @@ void load_csv(const std::string& path) {
         return;
     }
 
-    parse_csv(file_path);
+    std::filesystem::path csv_schema = build_jjma(parse_csv(file_path));
+
     return;
 }
 
@@ -146,9 +165,9 @@ void open_db(const std::string& path) {
             std::filesystem::path dir_entry_path = dir_entry.path();
             const std::string dir_entry_ext = dir_entry_path.extension().string();
 
-            if (dir_entry_ext == "jjdb" ||
-                dir_entry_ext == "jjma" ||
-                dir_entry_ext == "jjdx") {
+            if (dir_entry_ext == ".jjdb" ||
+                dir_entry_ext == ".jjma" ||
+                dir_entry_ext == ".jjdx") {
                     continue;
             } else {
                 std::cout << "Not a valid JJDB directory" << std::endl;

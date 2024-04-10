@@ -4,11 +4,12 @@
 #include <string>
 
 enum class MetaCommand {
-    Exit,       // .exit
-    LoadCSV,    // .load_csv /path/to/csv
-    Open,
-    Close,
-    CWD,
+    Exit,       // .exit;
+    LoadCSV,    // .load_csv /path/to/csv;
+    Open,       // .open /path/to/db;
+    Close,      // .close;
+    CWD,        // .cwd;
+    DROP,       // .drop;
     Unknown
 };
 

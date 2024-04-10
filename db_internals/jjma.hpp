@@ -20,6 +20,14 @@ enum jjma_dataTypes {
     BOOL    // bool
 };
 
+union jjma_data {
+    unsigned int id;
+    long int int_val;
+    double double_val;
+    std::string string_val;
+    bool bool_val;
+};
+
 std::filesystem::path build_jjma(const std::map<std::string, jjma_dataTypes>);
 
 #endif /* JJMA_HPP */

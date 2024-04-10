@@ -22,6 +22,8 @@
  * we create it within the struct by default.
  */
 std::map<std::string, jjma_dataTypes> parse_csv(const std::filesystem::path& file_path) {
+    // TODO: implement a more robust boolean datatype detection
+    
     std::ifstream file(file_path);
     std::string line;
     std::vector<std::vector<std::string>> data;
@@ -60,11 +62,6 @@ std::map<std::string, jjma_dataTypes> parse_csv(const std::filesystem::path& fil
             }
         }
         dataTypeMap[headers[i]] = convertToEnum(dataType); // Store header and uska data type in the map
-    }
-
-    // Output the data types stored in the map
-    for (const auto& pair : dataTypeMap) {
-        std::cout << pair.first << " is of type " << pair.second << std::endl;
     }
 
     return dataTypeMap;
