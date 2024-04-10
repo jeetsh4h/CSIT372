@@ -41,3 +41,4 @@ std::filesystem::path build_jjma(const std::map<std::string, jjma_dataTypes> jjm
     jjma_file.close();
     return jjma_path;
 }
+
