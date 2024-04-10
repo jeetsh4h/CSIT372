@@ -33,6 +33,7 @@ void exec_meta_command(const std::string& command) {
 
         case MetaCommand::Close:
             *global::cwd = std::filesystem::current_path();
+            global::db_open = false;
             break;
 
         case MetaCommand::CWD:
@@ -82,21 +83,26 @@ MetaCommand getMetaCommand(const std::string& command) {
 }
 
 void load_csv(const std::string& path) {
+    if (!global::db_open) {
+        std::cout << "No JJDB is open. Please open a JJDB before loading a CSV file." << std::endl;
+        return;
+    }
+
     std::filesystem::path file_path(path);
 
     // check if the file exists
     if (!std::filesystem::exists(file_path)) {
-        std::cout << "File does not exist" << std::endl;
+        std::cout << "File does not exist." << std::endl;
         return;
     }
 
     // check if the file is a csv file
     if (file_path.extension() != ".csv") {
-        std::cout << "Not a csv file" << std::endl;
+        std::cout << "Path provided is not to a CSV file." << std::endl;
         return;
     }
 
-    csv_to_table(file_path);
+    parse_csv(file_path);
     return;
 }
 
@@ -123,6 +129,7 @@ void open_db(const std::string& path) {
     if (!std::filesystem::exists(dir_path)) {
         if (std::filesystem::create_directory(dir_path)) {
             *global::cwd = dir_path;
+            global::db_open = true;
             return;
         } else {
             std::cout << "Cannot create this directory." << std::endl;
@@ -148,8 +155,8 @@ void open_db(const std::string& path) {
                 return;
             }
         }
-
         *global::cwd = dir_path;
+        global::db_open = true;
         return;
     }
 

@@ -2,8 +2,9 @@
 #define CSV_PARSING_HPP
 
 #include <filesystem>
+#include <map>
 
-void csv_to_table(const std::filesystem::path& file_path);
+std::map<std::string, jjma_dataTypes> parse_csv(const std::filesystem::path&);
 
 
 #endif /* CSV_PARSING_HPP */

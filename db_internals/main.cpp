@@ -10,6 +10,7 @@
 
 #include "global.hpp"
 std::filesystem::path *global::cwd;
+bool global::db_open;
 
 #include "interface-parsing.hpp"
 
@@ -17,6 +18,7 @@ int main() {
     // setting the current working directory in the heap
     // this will be updated by the open and close meta-commands
     global::cwd = new std::filesystem::path(std::filesystem::current_path());
+    global::db_open = false;
 
     dbLoop();
 }
