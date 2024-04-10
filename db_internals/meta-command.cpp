@@ -32,7 +32,6 @@ void exec_meta_command(const std::string& command) {
             break;
 
         case MetaCommand::Close:
-            // TODO: implement the close command
             *global::cwd = std::filesystem::current_path();
             break;
 
@@ -56,12 +55,16 @@ MetaCommand getMetaCommand(const std::string& command) {
         return MetaCommand::Exit;
     }
 
-    if (command == "close") {
+    if (command == "open") {
         return MetaCommand::Open;
     }
 
     if (command == "cwd") {
         return MetaCommand::CWD;
+    }
+
+    if (command == "close") {
+        return MetaCommand::Close;
     }
 
     std::vector<std::string> command_tokens = split_string(command, ' ');
@@ -117,6 +120,37 @@ void load_csv(const std::string& path) {
 void open_db(const std::string& path) {
     std::filesystem::path dir_path(path);
 
-    // TODO: Implement the open command
-    *global::cwd = dir_path;
+    if (!std::filesystem::exists(dir_path)) {
+        if (std::filesystem::create_directory(dir_path)) {
+            *global::cwd = dir_path;
+            return;
+        } else {
+            std::cout << "Cannot create this directory." << std::endl;
+            return;
+        }
+    }
+
+    if (!std::filesystem::is_directory(dir_path)) {
+        std::cout << "Path should be to a directory" << std::endl;
+        return;
+    } else {
+        /* const std::filesystem::directory_entry& */
+        for (auto const& dir_entry : std::filesystem::directory_iterator{dir_path}) {
+            std::filesystem::path dir_entry_path = dir_entry.path();
+            const std::string dir_entry_ext = dir_entry_path.extension().string();
+
+            if (dir_entry_ext == "jjdb" ||
+                dir_entry_ext == "jjma" ||
+                dir_entry_ext == "jjdx") {
+                    continue;
+            } else {
+                std::cout << "Not a valid JJDB directory" << std::endl;
+                return;
+            }
+        }
+
+        *global::cwd = dir_path;
+        return;
+    }
+
 }
