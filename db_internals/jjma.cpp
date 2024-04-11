@@ -46,6 +46,10 @@ std::filesystem::path build_jjma_for_csv(const std::map<std::string, jjma_dataTy
             // case jjma_dataTypes::BOOL:
             //     jjma_file << key << " : bool" << std::endl;
             //     break;
+
+            case jjma_dataTypes::UNKNOWN:
+                std::cout << "Unknown data type found in JJMA file." << std::endl;
+                return jjma_path;
         }
     }
 
