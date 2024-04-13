@@ -97,18 +97,25 @@ csv_row_to_jjdb_row(
 }
 
 void write_serially_to_jjdb(std::ofstream& jjdb_file, const std::map<std::string, jjdb_field>& jjdb_row) {
-    // size_t size = jjdb_row.size();
-    // jjdb_file.write(reinterpret_cast<const char*>(&size), sizeof(size));
-
     for (const auto& [header, field] : jjdb_row) {
-        size_t header_size = sizeof(header.c_str());
-        jjdb_file.write(reinterpret_cast<const char*>(&header_size), sizeof(header_size));
-        jjdb_file.write(header.c_str(), header_size);
+        jjdb_file << header << ":";
 
-        size_t field_size = sizeof(field);
-        jjdb_file.write(reinterpret_cast<const char*>(&field_size), sizeof(field_size));
-        jjdb_file.write(reinterpret_cast<const char*>(&field), field_size);
+        switch (field.index()) {
+            case 0: // int
+                jjdb_file << std::get<int>(field);
+                break;
+            case 1: // double
+                jjdb_file << std::get<double>(field);
+                break;
+            case 2: // string
+                jjdb_file << std::get<std::string>(field);
+                break;
+        }
+
+        jjdb_file << ";";
     }
+
+    jjdb_file << std::endl;
 }
 
 void deserialise_jjdb(const std::filesystem::path& jjdb_path, const std::filesystem::path& jjma_path) {

@@ -1,5 +1,6 @@
 *.out
 *.debug
+test_db
 
 
 # MacOS files in gitgnore
