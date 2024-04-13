@@ -14,20 +14,14 @@ std::filesystem::path build_jjdb_for_csv(const std::filesystem::path& csv_path) 
     }
     
     std::string db_name = global::cwd->filename().string();
-    std::filesystem::path jjma_path = *global::cwd / (db_name + ".jjma");
-    
-    if (!std::filesystem::exists(jjma_path)) {
-        std::cout << "No JJMA file found. Please create a JJMA file before creating a JJDB file." << std::endl;
-        return *global::cwd;
-    }
-    
-    std::filesystem::path jjdb_path = *global::cwd / (db_name + ".jjdb");
-    std::map<std::string, jjma_dataTypes> schema_map = parse_schema(jjma_path);
-    // Dealing with unknown or corrupted schema
-    if (schema_map.empty()) {
+
+    if (global::db_schema_map.empty()) {
+        std::cout << "No schema found. Please create a jjma file before creating a jjdb file." << std::endl;
         return *global::cwd;
     }
 
+    std::filesystem::path jjdb_path = *global::cwd / (db_name + ".jjdb");
+    
     std::ifstream csv_file(csv_path);
     std::ofstream jjdb_file(jjdb_path);
 
@@ -35,42 +29,44 @@ std::filesystem::path build_jjdb_for_csv(const std::filesystem::path& csv_path) 
     getline(csv_file, line);
     std::vector<std::string> headers = parse_csv_line(line);
     
+    /*
+     * assumes that the auto_id is the last column
+     * it does break if that is not the case
+     * CANNOT have a header being auto_id
+     */  
+    headers.push_back("auto_id");
+    
     int auto_id = 0;
     while(getline(csv_file, line)) {
         std::vector<std::string> row = parse_csv_line(line);
         
         /* std::map<std::string, jjdb_field> */
-        auto jjdb_row = csv_row_to_jjdb_row(row, schema_map, headers, auto_id);
+        auto jjdb_row = csv_row_to_jjdb_row(row, headers, auto_id);
         if (jjdb_row.empty()) {
             return *global::cwd;
-        }
-        
+        }        
         write_serially_to_jjdb(jjdb_file, jjdb_row);
-
-        /* DEBUG */
-        deserialise_jjdb(jjdb_path, jjma_path);
 
         auto_id++;
     }
 
+    csv_file.close();
+    jjdb_file.close();
     return jjdb_path;
 }
 
-// TODO:
 std::map<std::string, jjdb_field>
-csv_row_to_jjdb_row(
-    const std::vector<std::string> row, 
-    const std::map<std::string, jjma_dataTypes>& schema_map,
-    const std::vector<std::string> headers, int auto_id) {
-    
+csv_row_to_jjdb_row(const std::vector<std::string> row, const std::vector<std::string> headers, int auto_id) {
     std::map<std::string, jjdb_field> jjdb_row;
-    
-    for (size_t i = 0; i < row.size(); i++) {
+
+    /* headers can only be one length bigger than the row */
+    for (size_t i = 0; i < headers.size(); i++) {
         std::string col_name = headers.at(i);
-        jjma_dataTypes col_type = schema_map.at(col_name);
+        jjma_dataTypes col_type = global::db_schema_map.at(col_name);
 
         switch (col_type) {
             case jjma_dataTypes::ID:
+                // std::cout << "id being added to the jjdb row";
                 jjdb_row[col_name] = auto_id;
                 break;
 
@@ -96,20 +92,31 @@ csv_row_to_jjdb_row(
     return jjdb_row;
 }
 
+/* 
+ * closing of the jjdb_file is handled outside of this function
+ * this function only writes one row to the jjdb file at a time
+ */
 void write_serially_to_jjdb(std::ofstream& jjdb_file, const std::map<std::string, jjdb_field>& jjdb_row) {
     for (const auto& [header, field] : jjdb_row) {
         jjdb_file << header << ":";
 
-        switch (field.index()) {
-            case 0: // int
+        jjma_dataTypes col_type = global::db_schema_map.at(header);
+        switch (col_type) {
+            case jjma_dataTypes::ID:
                 jjdb_file << std::get<int>(field);
                 break;
-            case 1: // double
+            case jjma_dataTypes::INT:
+                jjdb_file << std::get<int>(field);
+                break;
+            case jjma_dataTypes::DOUBLE:
                 jjdb_file << std::get<double>(field);
                 break;
-            case 2: // string
+            case jjma_dataTypes::STRING:
                 jjdb_file << std::get<std::string>(field);
                 break;
+            default:
+                std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
+                return;
         }
 
         jjdb_file << ";";
@@ -118,77 +125,78 @@ void write_serially_to_jjdb(std::ofstream& jjdb_file, const std::map<std::string
     jjdb_file << std::endl;
 }
 
-void deserialise_jjdb(const std::filesystem::path& jjdb_path, const std::filesystem::path& jjma_path) {
-    std::ifstream jjdb_file(jjdb_path);
-    std::map<std::string, jjma_dataTypes> db_map = parse_schema(jjma_path);
+/* TODO */
+// void deserialise_jjdb(const std::filesystem::path& jjdb_path, const std::filesystem::path& jjma_path) {
+//     std::ifstream jjdb_file(jjdb_path);
+//     std::map<std::string, jjma_dataTypes> db_map = parse_schema(jjma_path);
 
-    std::vector<std::map<std::string, jjdb_field>> jjdb_data;
+//     std::vector<std::map<std::string, jjdb_field>> jjdb_data;
 
-    while (!jjdb_file.eof()) {
-        std::map<std::string, jjdb_field> jjdb_row;
+//     while (!jjdb_file.eof()) {
+//         std::map<std::string, jjdb_field> jjdb_row;
         
-        for (const auto& [_, dtype] : db_map) {
-            size_t header_size;
-            jjdb_file.read(reinterpret_cast<char*>(&header_size), sizeof(header_size));
-            char* header_c = new char[header_size];
-            jjdb_file.read(header_c, header_size);
-            std::string header = std::string(header_c);
+//         for (const auto& [_, dtype] : db_map) {
+//             size_t header_size;
+//             jjdb_file.read(reinterpret_cast<char*>(&header_size), sizeof(header_size));
+//             char* header_c = new char[header_size];
+//             jjdb_file.read(header_c, header_size);
+//             std::string header = std::string(header_c);
             
-            size_t field_size;
-            jjdb_file.read(reinterpret_cast<char*>(&field_size), sizeof(field_size));
-            char* field_c = new char[field_size];
-            jjdb_file.read(field_c, field_size);
-            switch (dtype) {
-                case jjma_dataTypes::ID:
-                    jjdb_row[header] = std::stoi(field_c);
-                    break;
+//             size_t field_size;
+//             jjdb_file.read(reinterpret_cast<char*>(&field_size), sizeof(field_size));
+//             char* field_c = new char[field_size];
+//             jjdb_file.read(field_c, field_size);
+//             switch (dtype) {
+//                 case jjma_dataTypes::ID:
+//                     jjdb_row[header] = std::stoi(field_c);
+//                     break;
 
-                case jjma_dataTypes::INT:
-                    jjdb_row[header] = std::stoi(field_c);
-                    break;
+//                 case jjma_dataTypes::INT:
+//                     jjdb_row[header] = std::stoi(field_c);
+//                     break;
 
-                case jjma_dataTypes::DOUBLE:
-                    jjdb_row[header] = std::stod(field_c);
-                    break;
+//                 case jjma_dataTypes::DOUBLE:
+//                     jjdb_row[header] = std::stod(field_c);
+//                     break;
 
-                case jjma_dataTypes::STRING:
-                    jjdb_row[header] = std::string(field_c);
-                    break;
+//                 case jjma_dataTypes::STRING:
+//                     jjdb_row[header] = std::string(field_c);
+//                     break;
 
-                case jjma_dataTypes::UNKNOWN:
-                    std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
-                    return;
-            }
-        }
-        jjdb_data.push_back(jjdb_row);
-    }
+//                 case jjma_dataTypes::UNKNOWN:
+//                     std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
+//                     return;
+//             }
+//         }
+//         jjdb_data.push_back(jjdb_row);
+//     }
 
-    for (const auto& row : jjdb_data) {
-        for (const auto& [header, field] : row) {
-            std::cout << header << ": "; 
+//     for (const auto& row : jjdb_data) {
+//         for (const auto& [header, field] : row) {
+//             std::cout << header << ": "; 
             
-            switch (db_map[header]) {
-                case jjma_dataTypes::ID:
-                    std::cout << std::get<int>(field) << std::endl;
-                    break;
+//             switch (db_map[header]) {
+//                 case jjma_dataTypes::ID:
+//                     std::cout << std::get<int>(field) << std::endl;
+//                     break;
 
-                case jjma_dataTypes::INT:
-                    std::cout << std::get<int>(field) << std::endl;
-                    break;
+//                 case jjma_dataTypes::INT:
+//                     std::cout << std::get<int>(field) << std::endl;
+//                     break;
                 
-                case jjma_dataTypes::DOUBLE:
-                    std::cout << std::get<double>(field) << std::endl;
-                    break;
+//                 case jjma_dataTypes::DOUBLE:
+//                     std::cout << std::get<double>(field) << std::endl;
+//                     break;
                 
-                case jjma_dataTypes::STRING:
-                    std::cout << std::get<std::string>(field) << std::endl;
-                    break;
+//                 case jjma_dataTypes::STRING:
+//                     std::cout << std::get<std::string>(field) << std::endl;
+//                     break;
                 
-                case jjma_dataTypes::UNKNOWN:
-                    std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
-                    return;
-            }
-        }
-        std::cout << std::endl;
-    }
-}
+//                 case jjma_dataTypes::UNKNOWN:
+//                     std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
+//                     return;
+//             }
+//         }
+//         std::cout << std::endl;
+//     }
+// }

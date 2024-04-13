@@ -12,12 +12,15 @@
 
 std::filesystem::path *global::cwd;
 bool global::db_open;
+std::map<std::string, jjma_dataTypes> global::db_schema_map;
 
 int main() {
     // setting the current working directory in the heap
     // this will be updated by the open and close meta-commands
     global::cwd = new std::filesystem::path(std::filesystem::current_path());
     global::db_open = false;
+    global::db_schema_map = std::map<std::string, jjma_dataTypes>();
+
 
     dbLoop();
 }

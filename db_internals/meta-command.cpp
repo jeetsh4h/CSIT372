@@ -173,6 +173,7 @@ void open_db(const std::string& path) {
         }
         *global::cwd = dir_path;
         global::db_open = true;
+        global::db_schema_map = parse_schema(*global::cwd / (dir_path.filename().string() + ".jjma"));
         return;
     }
 
