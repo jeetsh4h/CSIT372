@@ -103,7 +103,7 @@ void exec_insert(const std::string& args) {
     jjdb_row insert_row;
 
     for (const auto& pair : insert_pairs) {
-        std::vector<std::string> pair_tokens = split_string(pair, ':');
+        std::vector<std::string> pair_tokens = split_string(pair, '=');
         if (pair_tokens.size() != 2) {
             std::cout << "Invalid insert syntax here: " << pair << std::endl;
             return;

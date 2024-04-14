@@ -17,7 +17,7 @@ void write_serially_to_jjdb(std::ofstream&, const std::map<std::string, jjdb_fie
 jjdb_row deserialise_jjdb_row(const std::string&);
 
 jjdb_row read_row(int);
-void append_row(const jjdb_row&);
+    void append_row(jjdb_row&);
 
 int find_num_records();
 

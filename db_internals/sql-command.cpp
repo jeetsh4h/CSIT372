@@ -130,7 +130,8 @@ void exec_sql_command(const std::string& sql_command) {
             return;
 
         case SQLCommand::Insert:
-            if (token_idx + 1 >= num_tokens) {
+            token_idx++;
+            if (token_idx < num_tokens) {
                 std::cout << "Expected `end of cmd` after " << cmd_arg << std::endl;
                 return;
             }
