@@ -140,8 +140,51 @@ void exec_sql_command(const std::string& sql_command) {
             break;
 
         case SQLCommand::Update:
-            std::cout << "Updating " << cmd_arg << std::endl;
-            break;
+            token_idx++;
+            if (tokens.at(token_idx) == "where") {
+                token_idx++;
+                if (token_idx >= num_tokens) {
+                    std::cout << "Expected arguments after `where`" << std::endl;
+                    return;
+                }
+
+                std::vector<std::string> condition_tokens = std::vector<std::string>();
+                int condition_auto_id = -1;
+                if (tokens.at(token_idx) == "(") {
+                    token_idx++;
+                    while (true) {
+                        if (token_idx >= num_tokens) {
+                            std::cout << "Expected `)` in SQLite lite query" << std::endl;
+                            return;
+                        }
+                        if (tokens.at(token_idx) == ")") {
+                            break;
+                        }
+                        condition_tokens.push_back(tokens.at(token_idx));
+                        token_idx++;
+                    }
+                } else {
+                    try {
+                        condition_auto_id = std::stoi(tokens.at(token_idx));
+                    } catch (std::invalid_argument& e) {
+                        std::cout << "not a number after `where`" << std::endl;
+                        return;
+                    }
+                }
+
+                token_idx++;
+                if (token_idx < num_tokens) {
+                    std::cout << "Syntax Error: Expected `end of cmd`" << std::endl;
+                    return;
+                }
+
+                exec_update(cmd_arg, condition_tokens, condition_auto_id);
+                return;
+
+            } else {
+                std::cout << "Syntax Error: Expected `where` after " << cmd_arg << std::endl;
+                return;
+            }
 
         case SQLCommand::Delete:
             std::cout << "Deleting " << cmd_arg << std::endl;
@@ -175,39 +218,40 @@ void exec_sql_command(const std::string& sql_command) {
 
 
 SQLCommand getSQLCommand(const std::string& command) {
-    if (command == "select") {
+    std::string norm_command = to_lower(command);
+    if (norm_command == "select") {
         return SQLCommand::Select;
     }
 
-    if (command == "where") {
+    if (norm_command == "where") {
         return SQLCommand::Where;
     }
 
-    if (command == "insert") {
+    if (norm_command == "insert") {
         return SQLCommand::Insert;
     }
 
-    if (command == "update") {
+    if (norm_command == "update") {
         return SQLCommand::Update;
     }
 
-    if (command == "delete") {
+    if (norm_command == "delete") {
         return SQLCommand::Delete;
     }
 
-    if (command == "drop") {
+    if (norm_command == "drop") {
         return SQLCommand::Update;
     }
 
-    if (command == "take") {
+    if (norm_command == "take") {
         return SQLCommand::Take;
     }
 
-    if (command == "create") {
+    if (norm_command == "create") {
         return SQLCommand::Create;
     }
 
-    if (command == "drop") {
+    if (norm_command == "drop") {
         return SQLCommand::Drop;
     }
 

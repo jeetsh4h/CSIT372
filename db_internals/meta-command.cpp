@@ -110,7 +110,7 @@ void load_csv(const std::string& path) {
 
     // check if the file exists
     if (!std::filesystem::exists(csv_path)) {
-        std::cout << "File does not exist." << std::endl;
+        std::cout << "File does not exist: " << std::filesystem::absolute(csv_path) <<std::endl;
         return;
     }
 
@@ -120,7 +120,8 @@ void load_csv(const std::string& path) {
         return;
     }
 
-    build_jjma_for_csv(parse_csv(csv_path));
+    global::db_schema_map = parse_schema(build_jjma_for_csv(parse_csv(csv_path)));
+
     build_jjdb_for_csv(csv_path);
     return;
 }

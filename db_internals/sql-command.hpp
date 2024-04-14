@@ -24,6 +24,9 @@
  * auto_id cannot be inserted, will be done automatically
  * 
  * update header1=value1,header2=value2... where ( condition );
+ * update header1=value1,header2=value2... where k;
+ * k is the id to be updated
+ * update will use default values if some headers are not provided
  * 
  * delete k; delete where ( condition );
  * n can be the auto_id of the record to delete

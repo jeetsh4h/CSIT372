@@ -52,7 +52,7 @@ void dbLoop() {
  * Unless the command is something like .exit
  */
 int parse_input(const std::string& input) {
-    std::string stripped_input = to_lower(strip(input));
+    std::string stripped_input = strip(input);
     std::vector<std::string> commands = split_string(stripped_input, ';');
 
     for (const std::string& command : commands) {

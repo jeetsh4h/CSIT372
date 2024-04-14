@@ -45,7 +45,7 @@ std::filesystem::path build_jjdb_for_csv(const std::filesystem::path& csv_path) 
         if (db_row.empty()) {
             return *global::cwd;
         }        
-        write_serially_to_jjdb(jjdb_file, db_row);
+        serialise_and_write_to_jjdb(jjdb_file, db_row);
 
         auto_id++;
     }
@@ -95,33 +95,8 @@ jjdb_row csv_row_to_jjdb_row(const std::vector<std::string> row, const std::vect
  * closing of the jjdb_file is handled outside of this function
  * this function only writes one row to the jjdb file at a time
  */
-void write_serially_to_jjdb(std::ofstream& jjdb_file, const jjdb_row& db_row) {
-    for (const auto& [header, field] : db_row) {
-        jjdb_file << header << ":";
-
-        jjma_dataTypes col_type = global::db_schema_map.at(header);
-        switch (col_type) {
-            case jjma_dataTypes::ID:
-                jjdb_file << std::get<int>(field);
-                break;
-            case jjma_dataTypes::INT:
-                jjdb_file << std::get<int>(field);
-                break;
-            case jjma_dataTypes::DOUBLE:
-                jjdb_file << std::get<double>(field);
-                break;
-            case jjma_dataTypes::STRING:
-                jjdb_file << std::get<std::string>(field);
-                break;
-            default:
-                std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
-                return;
-        }
-
-        jjdb_file << ";";
-    }
-
-    jjdb_file << std::endl;
+void serialise_and_write_to_jjdb(std::ostream& jjdb_file, const jjdb_row& db_row) {
+    jjdb_file << serialise_jjdb_row(db_row) << std::endl;
 }
 
 jjdb_row read_row(int row_num) {
@@ -142,13 +117,13 @@ jjdb_row read_row(int row_num) {
 
     jjdb_file.close();
     
-    return deserialise_jjdb_row(line);
+    return deserialise_jjdb_row(lstrip(line));
 }
 
 jjdb_row deserialise_jjdb_row(const std::string& jjdb_line) {
     jjdb_row db_row;
 
-    for (const std::string& field : split_string(jjdb_line, ';')) {
+    for (const std::string& field : split_string(lstrip(jjdb_line), ';')) {
         std::vector<std::string> field_tokens = split_string(field, ':');
         std::string header = field_tokens.at(0);
         std::string value = field_tokens.at(1);
@@ -175,6 +150,38 @@ jjdb_row deserialise_jjdb_row(const std::string& jjdb_line) {
     return db_row;
 }
 
+void write_to_jjdb(std::ostream& jjdb_file, std::string& serialised_row) {
+    jjdb_file << serialised_row << std::endl;
+    return;
+}
+
+std::string serialise_jjdb_row(const jjdb_row& db_row) {
+    std::string serialised_row;
+    for (const auto& [header, field] : db_row) {
+        serialised_row += header + ":";
+        jjma_dataTypes col_type = global::db_schema_map.at(header);
+        switch (col_type) {
+            case jjma_dataTypes::ID:
+                serialised_row += std::to_string(std::get<int>(field));
+                break;
+            case jjma_dataTypes::INT:
+                serialised_row += std::to_string(std::get<int>(field));
+                break;
+            case jjma_dataTypes::DOUBLE:
+                serialised_row += std::to_string(std::get<double>(field));
+                break;
+            case jjma_dataTypes::STRING:
+                serialised_row += std::get<std::string>(field);
+                break;
+            default:
+                std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
+                return "";
+        }
+        serialised_row += ";";
+    }
+    return serialised_row;
+}
+
 void append_row(jjdb_row& db_row) {
     if (!global::db_open) {
         std::cout << "No JJDB is open. Open one to append to it." << std::endl;
@@ -186,7 +193,7 @@ void append_row(jjdb_row& db_row) {
     std::filesystem::path jjdb_path = *global::cwd / (db_name + ".jjdb");
 
     std::ofstream jjdb_file(jjdb_path, std::ios::app);
-    write_serially_to_jjdb(jjdb_file, db_row);
+    serialise_and_write_to_jjdb(jjdb_file, db_row);
     jjdb_file.close();
 }
 
@@ -206,4 +213,48 @@ int find_num_records() {
     }
     jjdb_file.close();
     return num_records;
+}
+
+void update_jjdb_row(int id, jjdb_row& db_row) {
+    if (!global::db_open) {
+        std::cout << "No JJDB is open. Open one to update a row." << std::endl;
+        return;
+    }
+    std::string db_name = global::cwd->filename().string();
+    std::filesystem::path jjdb_path = *global::cwd / (db_name + ".jjdb");
+    std::filesystem::path tmp_path = jjdb_path.string() + ".tmp";
+
+    std::ofstream tmp_file(tmp_path);
+    std::ifstream jjdb_file(jjdb_path);
+
+    std::string line;
+    for (int i = 0; i < id; ++i) {
+        if (!std::getline(jjdb_file, line)) {
+            std::cout << "ID provided is greater than the largest auto_id value in the database." << std::endl;
+            return;
+        }
+        tmp_file << line << std::endl;
+    }
+
+    std::string old_line;
+    getline(jjdb_file, old_line);
+    jjdb_row old_row = deserialise_jjdb_row(lstrip(old_line));
+    jjdb_row new_row = old_row;
+    for (const auto& [header, field] : db_row) {
+        new_row[header] = field;
+    }
+    std::string new_line = serialise_jjdb_row(new_row);
+
+    tmp_file << new_line << std::endl;
+
+    while (getline(jjdb_file, line)) {
+        tmp_file << line << std::endl;
+    }
+
+    jjdb_file.close();
+    tmp_file.close();
+
+    std::filesystem::remove(jjdb_path);
+    std::filesystem::rename(tmp_path, jjdb_path);
+    return;
 }
