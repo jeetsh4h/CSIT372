@@ -23,6 +23,7 @@ void serialise_and_write_to_jjdb(std::ostream&, const std::map<std::string, jjdb
 jjdb_row read_row(int);
 void append_row(jjdb_row&);
 void update_jjdb_row(int, jjdb_row&);
+void delete_jjdb_row(int);
 
 int find_num_records();
 

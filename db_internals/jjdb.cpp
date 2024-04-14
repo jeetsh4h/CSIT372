@@ -116,11 +116,14 @@ jjdb_row read_row(int row_num) {
     }
 
     jjdb_file.close();
-    
+
     return deserialise_jjdb_row(lstrip(line));
 }
 
 jjdb_row deserialise_jjdb_row(const std::string& jjdb_line) {
+    if (jjdb_line == "") {
+        return {};
+    }
     jjdb_row db_row;
 
     for (const std::string& field : split_string(lstrip(jjdb_line), ';')) {
@@ -247,6 +250,42 @@ void update_jjdb_row(int id, jjdb_row& db_row) {
 
     tmp_file << new_line << std::endl;
 
+    while (getline(jjdb_file, line)) {
+        tmp_file << line << std::endl;
+    }
+
+    jjdb_file.close();
+    tmp_file.close();
+
+    std::filesystem::remove(jjdb_path);
+    std::filesystem::rename(tmp_path, jjdb_path);
+    return;
+}
+
+void delete_jjdb_row(int id) {
+    if (!global::db_open) {
+        std::cout << "No JJDB is open. Open one to update a row." << std::endl;
+        return;
+    }
+    std::string db_name = global::cwd->filename().string();
+    std::filesystem::path jjdb_path = *global::cwd / (db_name + ".jjdb");
+    std::filesystem::path tmp_path = jjdb_path.string() + ".tmp";
+
+    std::ofstream tmp_file(tmp_path);
+    std::ifstream jjdb_file(jjdb_path);
+
+    std::string line;
+    for (int i = 0; i < id; ++i) {
+        if (!std::getline(jjdb_file, line)) {
+            std::cout << "ID provided is greater than the largest auto_id value in the database." << std::endl;
+            return;
+        }
+        tmp_file << line << std::endl;
+    }
+
+    tmp_file << std::endl;
+    getline(jjdb_file, line); // deleting file
+    
     while (getline(jjdb_file, line)) {
         tmp_file << line << std::endl;
     }

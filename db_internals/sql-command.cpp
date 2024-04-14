@@ -187,7 +187,45 @@ void exec_sql_command(const std::string& sql_command) {
             }
 
         case SQLCommand::Delete:
-            std::cout << "Deleting " << cmd_arg << std::endl;
+            if (cmd_arg == "where") {
+                token_idx++;
+                std::vector<std::string> condition_tokens;
+                int condition_auto_id = -1;
+                if (tokens.at(token_idx) == "(") {
+                    token_idx++;
+                    while (true) {
+                        if (token_idx >= num_tokens) {
+                            std::cout << "Expected `)` in SQLite lite query" << std::endl;
+                            return;
+                        }
+                        if (tokens.at(token_idx) == ")") {
+                            break;
+                        }
+                        condition_tokens.push_back(tokens.at(token_idx));
+                        token_idx++;
+                    }
+                    if (token_idx >= num_tokens) {
+                        std::cout << "Expected `end of cmd`" << std::endl;
+                        return;
+                    }
+                    exec_delete(condition_tokens, -1);
+                } else {
+                    try {
+                        condition_auto_id = std::stoi(tokens.at(token_idx));
+                    } catch (std::invalid_argument& e) {
+                        std::cout << "not a number after `where`" << std::endl;
+                        return;
+                    }
+                    token_idx++;
+                    if (token_idx < num_tokens) {
+                        std::cout << "Expected `end of cmd`" << std::endl;
+                        return;
+                    }
+                    exec_delete(std::vector<std::string>(), condition_auto_id);
+                }
+            } else {
+                std::cout << "Syntax Error: Expected `where`" << std::endl;
+            }
             break;
 
         case SQLCommand::Take:

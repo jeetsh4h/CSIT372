@@ -49,10 +49,15 @@ void exec_select(const std::string& args, const std::vector<std::string> conditi
     std::cout << std::endl;
 
     int line_num = 0;
-    while (take == -1 || line_num < take) {
+    int print_line = 0;
+    while (take == -1 || print_line < take) {
         jjdb_row db_row;
         try {
             db_row = read_row(line_num);
+            if (db_row.empty()) {
+                line_num++;
+                continue;
+            }
         } catch (std::out_of_range& e) {
             break;
         }
@@ -78,6 +83,7 @@ void exec_select(const std::string& args, const std::vector<std::string> conditi
         }
         std::cout << std::endl;
 
+        print_line++;
         line_num++;
     }
 }
@@ -253,5 +259,40 @@ void exec_update(const std::string& args, const std::vector<std::string> conditi
     }
 
     update_jjdb_row(id, update_row);
+    return;
+}
+
+void exec_delete(const std::vector<std::string> condition, int id) {
+    if (!global::db_open) {
+        std::cout << "No database is open. Please open a database before executing SQL commands." << std::endl;
+        return;
+    }
+
+    if (global::db_schema_map.empty()) {
+        std::cout << "No schema found OR schema corrupted." << std::endl;
+        return;
+    }
+
+    if (id < 0 && condition.empty()) {
+        std::cout << "No condition or id provided for delete." << std::endl;
+        return;
+    }
+
+    if (id >= 0 && !condition.empty()) {
+        std::cout << "Both condition and id provided for delete. Please provide only one." << std::endl;
+        return;
+    }
+
+    if (!condition.empty()) {
+        std::cout << "Condition not yet implemented." << std::endl;
+        return;
+    }
+
+    if (id >= find_num_records()) {
+        std::cout << "ID provided is greater than the largest auto_id value in the database." << std::endl;
+        return;
+    }   
+
+    delete_jjdb_row(id);
     return;
 }
