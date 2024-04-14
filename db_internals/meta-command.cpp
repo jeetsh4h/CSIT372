@@ -33,10 +33,12 @@ void exec_meta_command(const std::string& command) {
         case MetaCommand::Close:
             *global::cwd = std::filesystem::current_path();
             global::db_open = false;
+            global::db_schema_map = std::map<std::string, jjma_dataTypes>();
             break;
 
         case MetaCommand::CWD:
             std::cout << *global::cwd << std::endl;
+            
             break;
 
         case MetaCommand::DROP:
@@ -46,6 +48,7 @@ void exec_meta_command(const std::string& command) {
                 // and then call close
                 *global::cwd = std::filesystem::current_path();
                 global::db_open = false;
+                global::db_schema_map = std::map<std::string, jjma_dataTypes>();
             } else {
                 std::cout << "No JJDB is open. Please open the JJDB before dropping it." << std::endl;
             }

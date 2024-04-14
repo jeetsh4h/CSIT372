@@ -4,6 +4,7 @@
 #include "global.hpp"
 #include "csv-parsing.hpp"
 #include "jjma.hpp"
+#include "parse-utils.hpp"
 
 #include "jjdb.hpp"
 
@@ -40,12 +41,11 @@ std::filesystem::path build_jjdb_for_csv(const std::filesystem::path& csv_path) 
     while(getline(csv_file, line)) {
         std::vector<std::string> row = parse_csv_line(line);
         
-        /* std::map<std::string, jjdb_field> */
-        auto jjdb_row = csv_row_to_jjdb_row(row, headers, auto_id);
-        if (jjdb_row.empty()) {
+        jjdb_row db_row = csv_row_to_jjdb_row(row, headers, auto_id);
+        if (db_row.empty()) {
             return *global::cwd;
         }        
-        write_serially_to_jjdb(jjdb_file, jjdb_row);
+        write_serially_to_jjdb(jjdb_file, db_row);
 
         auto_id++;
     }
@@ -55,9 +55,8 @@ std::filesystem::path build_jjdb_for_csv(const std::filesystem::path& csv_path) 
     return jjdb_path;
 }
 
-std::map<std::string, jjdb_field>
-csv_row_to_jjdb_row(const std::vector<std::string> row, const std::vector<std::string> headers, int auto_id) {
-    std::map<std::string, jjdb_field> jjdb_row;
+jjdb_row csv_row_to_jjdb_row(const std::vector<std::string> row, const std::vector<std::string> headers, int auto_id) {
+    jjdb_row db_row;
 
     /* headers can only be one length bigger than the row */
     for (size_t i = 0; i < headers.size(); i++) {
@@ -67,19 +66,19 @@ csv_row_to_jjdb_row(const std::vector<std::string> row, const std::vector<std::s
         switch (col_type) {
             case jjma_dataTypes::ID:
                 // std::cout << "id being added to the jjdb row";
-                jjdb_row[col_name] = auto_id;
+                db_row[col_name] = auto_id;
                 break;
 
             case jjma_dataTypes::INT:
-                jjdb_row[col_name] = std::stoi(row.at(i));
+                db_row[col_name] = std::stoi(row.at(i));
                 break;
 
             case jjma_dataTypes::DOUBLE:
-                jjdb_row[col_name] = std::stod(row.at(i));
+                db_row[col_name] = std::stod(row.at(i));
                 break;
 
             case jjma_dataTypes::STRING:
-                jjdb_row[col_name] = row.at(i);
+                db_row[col_name] = row.at(i);
                 break;
 
             case jjma_dataTypes::UNKNOWN:
@@ -89,15 +88,15 @@ csv_row_to_jjdb_row(const std::vector<std::string> row, const std::vector<std::s
 
     }
 
-    return jjdb_row;
+    return db_row;
 }
 
 /* 
  * closing of the jjdb_file is handled outside of this function
  * this function only writes one row to the jjdb file at a time
  */
-void write_serially_to_jjdb(std::ofstream& jjdb_file, const std::map<std::string, jjdb_field>& jjdb_row) {
-    for (const auto& [header, field] : jjdb_row) {
+void write_serially_to_jjdb(std::ofstream& jjdb_file, const jjdb_row& db_row) {
+    for (const auto& [header, field] : db_row) {
         jjdb_file << header << ":";
 
         jjma_dataTypes col_type = global::db_schema_map.at(header);
@@ -125,78 +124,53 @@ void write_serially_to_jjdb(std::ofstream& jjdb_file, const std::map<std::string
     jjdb_file << std::endl;
 }
 
-/* TODO */
-// void deserialise_jjdb(const std::filesystem::path& jjdb_path, const std::filesystem::path& jjma_path) {
-//     std::ifstream jjdb_file(jjdb_path);
-//     std::map<std::string, jjma_dataTypes> db_map = parse_schema(jjma_path);
+jjdb_row read_row(int row_num) {
+    if (!global::db_open) {
+        std::cout << "No JJDB is open. Open one to read from it." << std::endl;
+        return;
+    }
+    std::string db_name = global::cwd->filename().string();
+    std::filesystem::path jjdb_path = *global::cwd / (db_name + ".jjdb");
 
-//     std::vector<std::map<std::string, jjdb_field>> jjdb_data;
+    std::ifstream jjdb_file(jjdb_path);
+    std::string line;
+    for (int i = 0; i <= row_num; ++i) {
+        if (!std::getline(jjdb_file, line)) {
+            throw std::out_of_range("Line number out of range");
+        }
+    }
 
-//     while (!jjdb_file.eof()) {
-//         std::map<std::string, jjdb_field> jjdb_row;
-        
-//         for (const auto& [_, dtype] : db_map) {
-//             size_t header_size;
-//             jjdb_file.read(reinterpret_cast<char*>(&header_size), sizeof(header_size));
-//             char* header_c = new char[header_size];
-//             jjdb_file.read(header_c, header_size);
-//             std::string header = std::string(header_c);
-            
-//             size_t field_size;
-//             jjdb_file.read(reinterpret_cast<char*>(&field_size), sizeof(field_size));
-//             char* field_c = new char[field_size];
-//             jjdb_file.read(field_c, field_size);
-//             switch (dtype) {
-//                 case jjma_dataTypes::ID:
-//                     jjdb_row[header] = std::stoi(field_c);
-//                     break;
+    jjdb_file.close();
+    
+    return deserialise_jjdb_row(line);
+}
 
-//                 case jjma_dataTypes::INT:
-//                     jjdb_row[header] = std::stoi(field_c);
-//                     break;
+jjdb_row deserialise_jjdb_row(const std::string& jjdb_line) {
+    jjdb_row db_row;
 
-//                 case jjma_dataTypes::DOUBLE:
-//                     jjdb_row[header] = std::stod(field_c);
-//                     break;
+    for (const std::string& field : split_string(jjdb_line, ';')) {
+        std::vector<std::string> field_tokens = split_string(field, ':');
+        std::string header = field_tokens.at(0);
+        std::string value = field_tokens.at(1);
 
-//                 case jjma_dataTypes::STRING:
-//                     jjdb_row[header] = std::string(field_c);
-//                     break;
-
-//                 case jjma_dataTypes::UNKNOWN:
-//                     std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
-//                     return;
-//             }
-//         }
-//         jjdb_data.push_back(jjdb_row);
-//     }
-
-//     for (const auto& row : jjdb_data) {
-//         for (const auto& [header, field] : row) {
-//             std::cout << header << ": "; 
-            
-//             switch (db_map[header]) {
-//                 case jjma_dataTypes::ID:
-//                     std::cout << std::get<int>(field) << std::endl;
-//                     break;
-
-//                 case jjma_dataTypes::INT:
-//                     std::cout << std::get<int>(field) << std::endl;
-//                     break;
-                
-//                 case jjma_dataTypes::DOUBLE:
-//                     std::cout << std::get<double>(field) << std::endl;
-//                     break;
-                
-//                 case jjma_dataTypes::STRING:
-//                     std::cout << std::get<std::string>(field) << std::endl;
-//                     break;
-                
-//                 case jjma_dataTypes::UNKNOWN:
-//                     std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
-//                     return;
-//             }
-//         }
-//         std::cout << std::endl;
-//     }
-// }
+        jjma_dataTypes col_type = global::db_schema_map.at(header);
+        switch (col_type) {
+            case jjma_dataTypes::ID:
+                db_row[header] = std::stoi(value);
+                break;
+            case jjma_dataTypes::INT:
+                db_row[header] = std::stoi(value);
+                break;
+            case jjma_dataTypes::DOUBLE:
+                db_row[header] = std::stod(value);
+                break;
+            case jjma_dataTypes::STRING:
+                db_row[header] = value;
+                break;
+            default:
+                std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
+                return {};
+        }
+    }
+    return db_row;
+}   

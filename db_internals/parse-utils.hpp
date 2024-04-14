@@ -9,6 +9,6 @@ std::string lstrip(const std::string&);
 std::string strip(const std::string&);
 
 std::vector<std::string> split_string(const std::string&, char);
-
+std::string to_lower(const std::string&);
 
 #endif /* PARSE_UTILS_HPP */
