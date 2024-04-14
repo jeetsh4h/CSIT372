@@ -25,6 +25,8 @@ void append_row(jjdb_row&);
 void update_jjdb_row(int, jjdb_row&);
 void delete_jjdb_row(int);
 
+void create_idx(const std::string&);
+
 int find_num_records();
 
 #endif /* JJDB_HPP */

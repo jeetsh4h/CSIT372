@@ -297,3 +297,57 @@ void delete_jjdb_row(int id) {
     std::filesystem::rename(tmp_path, jjdb_path);
     return;
 }
+
+void create_idx(const std::string& idx_header) {
+    if (!global::db_open) {
+        std::cout << "No JJDB is open. Open one to update a row." << std::endl;
+        return;
+    }
+
+    std::string db_name = global::cwd->filename().string();
+    std::filesystem::path jjdb_path = *global::cwd / (db_name + ".jjdb");
+    std::filesystem::path idx_path = *global::cwd / (idx_header + ".jjdx");
+
+    std::ifstream jjdb_file(jjdb_path);
+    std::ofstream idx_file(idx_path);
+    
+    std::map<jjdb_field, int> idx_map;
+    std::string line;
+    while (getline(jjdb_file, line)) {
+        jjdb_row db_row = deserialise_jjdb_row(lstrip(line));
+        if (db_row.empty()) {
+            continue;
+        }
+        idx_map[db_row.at(idx_header)] = std::get<int>(db_row.at("auto_id"));
+    }
+
+    switch (global::db_schema_map.at(idx_header)) {
+        case jjma_dataTypes::ID:
+
+            std::cout << "Cannot create an index on an ID column." << std::endl;
+            break;
+        
+        case jjma_dataTypes::INT:
+            for (const auto& [key, value] : idx_map) {
+                    idx_file << value << ":" << std::get<int>(key) << std::endl;
+                }
+            break;
+        
+        case jjma_dataTypes::DOUBLE:
+            for (const auto& [key, value] : idx_map) {
+                    idx_file << value << ":" << std::get<double>(key) << std::endl;
+                }
+            break;
+        
+        case jjma_dataTypes::STRING:
+            for (const auto& [key, value] : idx_map) {
+                    idx_file << value << ":" << std::get<std::string>(key) << std::endl;
+                }
+            break;
+        
+        case jjma_dataTypes::UNKNOWN:
+            std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
+            return;
+    }
+    return;
+}

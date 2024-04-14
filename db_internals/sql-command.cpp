@@ -233,17 +233,19 @@ void exec_sql_command(const std::string& sql_command) {
             break;
 
         case SQLCommand::Create:
-            if (token_idx + 1 >= num_tokens) {
+            if (token_idx + 1 < num_tokens) {
                 std::cout << "Expected `end of cmd` after " << cmd_arg << std::endl;
                 return;
             }
+            exec_create_idx(cmd_arg);
             break;
 
         case SQLCommand::Drop:
-            if (token_idx + 1 >= num_tokens) {
+            if (token_idx + 1 < num_tokens) {
                 std::cout << "Expected `end of cmd` after " << cmd_arg << std::endl;
                 return;
             }
+            exec_drop_idx(cmd_arg);
             break;
 
         case SQLCommand::Unknown:
@@ -278,7 +280,7 @@ SQLCommand getSQLCommand(const std::string& command) {
     }
 
     if (norm_command == "drop") {
-        return SQLCommand::Update;
+        return SQLCommand::Drop;
     }
 
     if (norm_command == "take") {

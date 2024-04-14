@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <fstream>
 #include <iostream>
 #include <algorithm>
 
@@ -294,5 +295,48 @@ void exec_delete(const std::vector<std::string> condition, int id) {
     }   
 
     delete_jjdb_row(id);
+    return;
+}
+
+void exec_create_idx(const std::string& idx_header) {
+    if (!global::db_open) {
+        std::cout << "No database is open. Please open a database before executing SQL commands." << std::endl;
+        return;
+    }
+
+    if (global::db_schema_map.empty()) {
+        std::cout << "No schema found OR schema corrupted." << std::endl;
+        return;
+    }
+
+    if (idx_header == "auto_id") {
+        std::cout << "Cannot create index on auto_id." << std::endl;
+        return;
+    }
+
+    for (const auto& [header, _] : global::db_schema_map) {
+        if (idx_header == header) {
+            create_idx(idx_header);
+            return;
+        }
+    }
+
+    std::cout << "(refer to schema) Invalid header: " << idx_header << std::endl;
+    return;
+}
+
+void exec_drop_idx(const std::string& idx_header) {
+    if (!global::db_open) {
+        std::cout << "No database is open. Please open a database before executing SQL commands." << std::endl;
+        return;
+    }
+
+    std::filesystem::path idx_path = *global::cwd / (idx_header + ".jjdx");
+    if (std::filesystem::exists(idx_path)) {
+        std::filesystem::remove(idx_path);
+    } else {
+        std::cout << "Index does not exist." << std::endl;
+    }
+
     return;
 }

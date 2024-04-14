@@ -7,4 +7,7 @@ void exec_insert(const std::string&);
 void exec_update(const std::string&, const std::vector<std::string>, int);
 void exec_delete(const std::vector<std::string>, int);
 
+void exec_create_idx(const std::string&);
+void exec_drop_idx(const std::string&);
+
 #endif /* SQL_QUERY_HPP */
