@@ -173,4 +173,37 @@ jjdb_row deserialise_jjdb_row(const std::string& jjdb_line) {
         }
     }
     return db_row;
-}   
+}
+
+void append_row(jjdb_row& db_row) {
+    if (!global::db_open) {
+        std::cout << "No JJDB is open. Open one to append to it." << std::endl;
+        return;
+    }
+    db_row["auto_id"] = find_num_records();
+    
+    std::string db_name = global::cwd->filename().string();
+    std::filesystem::path jjdb_path = *global::cwd / (db_name + ".jjdb");
+
+    std::ofstream jjdb_file(jjdb_path, std::ios::app);
+    write_serially_to_jjdb(jjdb_file, db_row);
+    jjdb_file.close();
+}
+
+int find_num_records() {
+    if (!global::db_open) {
+        std::cout << "No JJDB is open. Open one to find the number of records." << std::endl;
+        return -1;
+    }
+    std::string db_name = global::cwd->filename().string();
+    std::filesystem::path jjdb_path = *global::cwd / (db_name + ".jjdb");
+
+    std::ifstream jjdb_file(jjdb_path);
+    std::string line;
+    int num_records = 0;
+    while (std::getline(jjdb_file, line)) {
+        num_records++;
+    }
+    jjdb_file.close();
+    return num_records;
+}

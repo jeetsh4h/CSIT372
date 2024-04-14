@@ -14,8 +14,11 @@ std::map<std::string, jjdb_field>
 csv_row_to_jjdb_row(const std::vector<std::string>,const std::vector<std::string>, const int);
 
 void write_serially_to_jjdb(std::ofstream&, const std::map<std::string, jjdb_field>&);
-std::map<std::string, jjdb_field> deserialise_jjdb_row(const std::string&);
+jjdb_row deserialise_jjdb_row(const std::string&);
 
-std::map<std::string, jjdb_field> read_row(int);
+jjdb_row read_row(int);
+void append_row(const jjdb_row&);
+
+int find_num_records();
 
 #endif /* JJDB_HPP */

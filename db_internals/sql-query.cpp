@@ -81,3 +81,93 @@ void exec_select(const std::string& args, const std::vector<std::string> conditi
         line_num++;
     }
 }
+
+void exec_insert(const std::string& args) {
+    if (!global::db_open) {
+        std::cout << "No database is open. Please open a database before executing SQL commands." << std::endl;
+        return;
+    }
+
+    if (global::db_schema_map.empty()) {
+        std::cout << "No schema found OR schema corrupted." << std::endl;
+        return;
+    }
+
+    std::vector<std::string> schema_headers;
+    for (const auto& [header, _] : global::db_schema_map) {
+        schema_headers.push_back(header);
+    }
+
+    std::vector<std::string> insert_headers;
+    std::vector<std::string> insert_pairs = split_string(args, ',');
+    jjdb_row insert_row;
+
+    for (const auto& pair : insert_pairs) {
+        std::vector<std::string> pair_tokens = split_string(pair, ':');
+        if (pair_tokens.size() != 2) {
+            std::cout << "Invalid insert syntax here: " << pair << std::endl;
+            return;
+        }
+
+        std::string header = pair_tokens[0];
+        std::string value = pair_tokens[1];
+
+        if (header == "auto_id") {
+            std::cout << "Cannot set auto_id. It is auto-generated." << std::endl;
+            return;
+        }
+        insert_headers.push_back(header);
+        
+        if (std::find(schema_headers.begin(), schema_headers.end(), header) == schema_headers.end()) {
+            std::cout << "Invalid header: " << header << std::endl;
+            return;
+        }
+
+        switch (global::db_schema_map[header]) {
+            case jjma_dataTypes::ID:
+                insert_row[header] = std::stoi(value);
+                break;
+            case jjma_dataTypes::INT:
+                insert_row[header] = std::stoi(value);
+                break;
+            case jjma_dataTypes::DOUBLE:
+                insert_row[header] = std::stod(value);
+                break;
+            case jjma_dataTypes::STRING:
+                insert_row[header] = value;
+                break;
+            case jjma_dataTypes::UNKNOWN:
+                std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
+                return;
+        }
+    }
+
+    for (const auto& header : schema_headers) {
+        if (header == "auto_id") {
+            continue;
+        }
+        if (std::find(insert_headers.begin(), insert_headers.end(), header) == insert_headers.end()) {
+            switch (global::db_schema_map[header]) {
+                case jjma_dataTypes::ID:
+                    /* Should never enter here */
+                    std::cout << "ID should not be present in the insert statement." << std::endl;
+                    return;
+                case jjma_dataTypes::INT:
+                    insert_row[header] = 0;
+                    break;
+                case jjma_dataTypes::DOUBLE:
+                    insert_row[header] = 0.0;
+                    break;
+                case jjma_dataTypes::STRING:
+                    insert_row[header] = "NA";
+                    break;
+                case jjma_dataTypes::UNKNOWN:
+                    std::cout << "Unknown data type found in schema. Please correct the schema." << std::endl;
+                    return;
+            }
+        }
+    }
+
+    append_row(insert_row);
+    return;
+}

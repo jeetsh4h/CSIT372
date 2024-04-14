@@ -167,7 +167,8 @@ void open_db(const std::string& path) {
 
             if (dir_entry_ext == ".jjdb" ||
                 dir_entry_ext == ".jjma" ||
-                dir_entry_ext == ".jjdx") {
+                dir_entry_ext == ".jjdx" ||
+                dir_entry_ext == ".jjfo") {
                     continue;
             } else {
                 std::cout << "Not a valid JJDB directory" << std::endl;

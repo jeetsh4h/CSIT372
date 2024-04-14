@@ -134,6 +134,8 @@ void exec_sql_command(const std::string& sql_command) {
                 std::cout << "Expected `end of cmd` after " << cmd_arg << std::endl;
                 return;
             }
+            
+            exec_insert(cmd_arg);
             break;
 
         case SQLCommand::Update:
