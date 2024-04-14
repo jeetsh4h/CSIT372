@@ -127,7 +127,7 @@ void write_serially_to_jjdb(std::ofstream& jjdb_file, const jjdb_row& db_row) {
 jjdb_row read_row(int row_num) {
     if (!global::db_open) {
         std::cout << "No JJDB is open. Open one to read from it." << std::endl;
-        return;
+        return {};
     }
     std::string db_name = global::cwd->filename().string();
     std::filesystem::path jjdb_path = *global::cwd / (db_name + ".jjdb");

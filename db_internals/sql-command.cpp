@@ -93,6 +93,7 @@ void exec_sql_command(const std::string& sql_command) {
                     }
 
                     exec_select(cmd_arg, condition_tokens, take_num);
+                    return;
                 } else {
                     std::cout << "Syntax Error: Only expecting `take` after condition" << std::endl;
                 }
@@ -120,6 +121,7 @@ void exec_sql_command(const std::string& sql_command) {
                 }
 
                 exec_select(cmd_arg, std::vector<std::string>(), take_num);
+                return;
             }
             break;
 

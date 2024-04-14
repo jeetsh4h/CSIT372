@@ -12,7 +12,7 @@
 
 
 // TODO: implement where condition
-void exec_select(const std::string& args, const std::vector<std::string> condition = std::vector<std::string>(), int take = -1) {
+void exec_select(const std::string& args, const std::vector<std::string> condition, int take) {
     if (!global::db_open) {
         std::cout << "No database is open. Please open a database before executing SQL commands." << std::endl;
         return;
